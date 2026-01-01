@@ -27,9 +27,9 @@ DeepFaceLab 上游项目地址：
 以下为作者环境的验证信息（用于复现参考）：
 - Python：3.14 or 3.12
 - PyTorch：2.9.x（见 `requirements.txt`）
-- CUDA：13（如使用 NVIDIA GPU；具体驱动/Toolkit 以你的系统为准）
+- CUDA：13（只需要更新nvidia驱动到最新版本，确认支持cuda13就行）
 
-> 注：CUDA/驱动组合可能随平台变化。若你在不同环境上遇到安装/运行差异，建议优先以 PyTorch 官方提供的安装矩阵为准。
+> 注：CUDA/驱动组合可能随平台变化。若你在不同环境上遇到安装/运行差异，建议优先以 PyTorch 官方提供的安装为准。
 
 ## 安装
 

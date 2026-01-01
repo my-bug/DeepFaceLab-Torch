@@ -1,4 +1,4 @@
-# deepfacelab_Torch（模型转换与训练入口说明）
+# deepfacelab_Torch
 
 本仓库是一个 DeepFaceLab 相关的 PyTorch 版本实验/工程化仓库，重点包含：
 - 训练 / 提取 / 合成等 CLI 入口（推荐使用 `main.py`）

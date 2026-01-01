@@ -25,7 +25,7 @@ DeepFaceLab 上游项目地址：
 ## 验证环境
 
 以下为作者环境的验证信息（用于复现参考）：
-- Python：3.14（`main.py` 强制要求至少 3.14）
+- Python：3.14 or 3.12
 - PyTorch：2.9.x（见 `requirements.txt`）
 - CUDA：13（如使用 NVIDIA GPU；具体驱动/Toolkit 以你的系统为准）
 

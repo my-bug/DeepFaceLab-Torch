@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.venv/
+venv/
+
+# OS / Editor
+.DS_Store
+.vscode/
+
+# Runtime / local data
+# Workspace data (generated / large)
+# 如果你不希望把训练数据与模型目录提交到 GitHub，请取消下一行注释。
+# workspace/
+
+# Do NOT include upstream original project directory in this repo
+DeepFaceLab-master/

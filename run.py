@@ -108,6 +108,25 @@ def _prompt_path(text: str, default: Path, ensure: bool = False) -> Path:
     return p
 
 
+def _find_default_pretraining_dir(workspace: Path) -> Path | None:
+    """Try to find a sensible default pretraining faceset directory.
+
+    Notes:
+    - For DFL training CLI, we usually pass an *aligned faceset directory*.
+    - We only return paths that already exist to avoid silently creating
+      unexpected folders.
+    """
+
+    candidates = [
+        workspace / 'pretrain_faces' / 'aligned',
+        workspace / 'pretrain_faces',
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
 def _available_models(dfl_root: Path) -> list[str]:
     models_dir = dfl_root / 'models'
     if not models_dir.exists():
@@ -345,6 +364,14 @@ def _cmd_train(ctx: LaunchContext) -> int:
     model_dir = _prompt_path('模型目录（--model-dir）', ctx.workspace / 'model', ensure=True)
     model_name = _choose_model(ctx, default='SAEHD')
 
+    want_pretrain = _prompt_yes_no('使用 pretrain 数据（需要 --pretraining-data-dir）', default=False)
+    pretraining_dir: Path | None = None
+    if want_pretrain:
+        default_pretraining = _find_default_pretraining_dir(ctx.workspace)
+        if default_pretraining is None:
+            default_pretraining = ctx.workspace / 'pretrain_faces' / 'aligned'
+        pretraining_dir = _prompt_path('pretrain faceset 目录（--pretraining-data-dir）', default_pretraining, ensure=False)
+
     silent_start = _prompt_yes_no('静默启动（--silent-start）', default=True)
     no_preview = _prompt_yes_no('禁用预览窗口（--no-preview）', default=False)
 
@@ -355,6 +382,8 @@ def _cmd_train(ctx: LaunchContext) -> int:
         '--model-dir', str(model_dir),
         '--model', model_name,
     ]
+    if pretraining_dir is not None:
+        args += ['--pretraining-data-dir', str(pretraining_dir)]
     if silent_start:
         args.append('--silent-start')
     if no_preview:
@@ -373,20 +402,22 @@ def _cmd_bat_train_model(ctx: LaunchContext, model: str, src_is_dst: bool = Fals
     _ensure_dir(dst_aligned)
     _ensure_dir(ctx.workspace / 'model')
 
-    return _run_python_main(
-        [
-            'train',
-            '--training-data-src-dir',
-            str(src_aligned),
-            '--training-data-dst-dir',
-            str(dst_aligned),
-            '--model-dir',
-            str(ctx.workspace / 'model'),
-            '--model',
-            model,
-        ],
-        ctx,
-    )
+    pretraining_dir = _find_default_pretraining_dir(ctx.workspace)
+
+    args = [
+        'train',
+        '--training-data-src-dir',
+        str(src_aligned),
+        '--training-data-dst-dir',
+        str(dst_aligned),
+        '--model-dir',
+        str(ctx.workspace / 'model'),
+        '--model',
+        model,
+    ]
+    if pretraining_dir is not None:
+        args += ['--pretraining-data-dir', str(pretraining_dir)]
+    return _run_python_main(args, ctx)
 
 
 def _cmd_merge(ctx: LaunchContext) -> int:
@@ -453,6 +484,13 @@ def _cmd_xseg_train(ctx: LaunchContext) -> int:
     src_aligned = _prompt_path('SRC faceset（--training-data-src-dir）', ctx.workspace / 'data_src' / 'aligned', ensure=True)
     dst_aligned = _prompt_path('DST faceset（--training-data-dst-dir）', ctx.workspace / 'data_dst' / 'aligned', ensure=True)
     model_dir = _prompt_path('模型目录（--model-dir）', ctx.workspace / 'model', ensure=True)
+    want_pretrain = _prompt_yes_no('使用 pretrain 数据（需要 --pretraining-data-dir）', default=False)
+    pretraining_dir: Path | None = None
+    if want_pretrain:
+        default_pretraining = _find_default_pretraining_dir(ctx.workspace)
+        if default_pretraining is None:
+            default_pretraining = ctx.workspace / 'pretrain_faces'
+        pretraining_dir = _prompt_path('pretrain 目录（--pretraining-data-dir）', default_pretraining, ensure=False)
     silent_start = _prompt_yes_no('静默启动（--silent-start）', default=True)
     no_preview = _prompt_yes_no('禁用预览窗口（--no-preview）', default=False)
 
@@ -463,6 +501,8 @@ def _cmd_xseg_train(ctx: LaunchContext) -> int:
         '--training-data-dst-dir', str(dst_aligned),
         '--model-dir', str(model_dir),
     ]
+    if pretraining_dir is not None:
+        args += ['--pretraining-data-dir', str(pretraining_dir)]
     if silent_start:
         args.append('--silent-start')
     if no_preview:
@@ -474,17 +514,23 @@ def _cmd_bat_xseg_train(ctx: LaunchContext) -> int:
     _ensure_dir(ctx.workspace / 'data_src' / 'aligned')
     _ensure_dir(ctx.workspace / 'data_dst' / 'aligned')
     _ensure_dir(ctx.workspace / 'model')
+
+    pretraining_dir = _find_default_pretraining_dir(ctx.workspace)
+
+    args = [
+        'xseg',
+        'train',
+        '--training-data-src-dir',
+        str(ctx.workspace / 'data_src' / 'aligned'),
+        '--training-data-dst-dir',
+        str(ctx.workspace / 'data_dst' / 'aligned'),
+        '--model-dir',
+        str(ctx.workspace / 'model'),
+    ]
+    if pretraining_dir is not None:
+        args += ['--pretraining-data-dir', str(pretraining_dir)]
     return _run_python_main(
-        [
-            'xseg',
-            'train',
-            '--training-data-src-dir',
-            str(ctx.workspace / 'data_src' / 'aligned'),
-            '--training-data-dst-dir',
-            str(ctx.workspace / 'data_dst' / 'aligned'),
-            '--model-dir',
-            str(ctx.workspace / 'model'),
-        ],
+        args,
         ctx,
     )
 

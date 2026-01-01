@@ -48,6 +48,17 @@ class ModelBase(object):
 
         self.model_class_name = model_class_name = Path(inspect.getmodule(self).__file__).parent.name.rsplit("_", 1)[1]
 
+        def _extract_base_model_name_from_data_dat(filename: str):
+            """Extract base model name from '<base>_<class>_data.dat'.
+
+            Base names may contain underscores. Do NOT use split('_')[0].
+            """
+
+            suffix = f"_{model_class_name}_data.dat"
+            if filename.endswith(suffix):
+                return filename[: -len(suffix)]
+            return None
+
         if force_model_class_name is None:
             if force_model_name is not None:
                 self.model_name = force_model_name
@@ -58,7 +69,9 @@ class ModelBase(object):
                     for filepath in pathex.get_file_paths(saved_models_path):
                         filepath_name = filepath.name
                         if filepath_name.endswith(f'{model_class_name}_data.dat'):
-                            saved_models_names += [ (filepath_name.split('_')[0], os.path.getmtime(filepath)) ]
+                            base = _extract_base_model_name_from_data_dat(filepath_name)
+                            if base is not None:
+                                saved_models_names += [ (base, os.path.getmtime(filepath)) ]
 
                     # sort by modified datetime
                     saved_models_names = sorted(saved_models_names, key=operator.itemgetter(1), reverse=True )
@@ -105,17 +118,18 @@ class ModelBase(object):
                                                 if is_rename:
                                                     new_model_name = io.input_str(f"请输入模型的新名称")
 
+                                                old_prefix = f"{name}_{model_class_name}_"
                                                 for filepath in pathex.get_paths(saved_models_path):
                                                     filepath_name = filepath.name
+                                                    if not filepath_name.startswith(old_prefix):
+                                                        continue
 
-                                                    model_filename, remain_filename = filepath_name.split('_', 1)
-                                                    if model_filename == name:
-
-                                                        if is_rename:
-                                                            new_filepath = filepath.parent / ( new_model_name + '_' + remain_filename )
-                                                            filepath.rename (new_filepath)
-                                                        elif is_delete:
-                                                            filepath.unlink()
+                                                    remain_filename = filepath_name[len(name) + 1 :]
+                                                    if is_rename:
+                                                        new_filepath = filepath.parent / (new_model_name + '_' + remain_filename)
+                                                        filepath.rename(new_filepath)
+                                                    elif is_delete:
+                                                        filepath.unlink()
                                         continue
 
                                 self.model_name = inp
@@ -128,7 +142,10 @@ class ModelBase(object):
                     break
 
 
-            self.model_name = self.model_name + '_' + self.model_class_name
+            # Users may input full name (e.g. MyModel_SAEHD). Avoid creating
+            # MyModel_SAEHD_SAEHD which would look like "lost" progress.
+            if not self.model_name.endswith('_' + self.model_class_name):
+                self.model_name = self.model_name + '_' + self.model_class_name
         else:
             self.model_name = force_model_class_name
 

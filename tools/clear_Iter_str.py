@@ -7,7 +7,7 @@
 - 可选删除旧的 *_summary.txt（下次训练会重新生成干净的 summary）
 
 示例：
-  # 仅清理 options 里的垃圾字段，并删除 summary
+  # 仅清理 options 里的字段，并删除 summary
 	python tools/clear_Iter.py --data workspace/model/new_SAEHD_data.dat --remove-option-contains "模型训练|严禁转卖" --delete-summary
 
 	# 重置 iter(=1) + loss_history，并清字段

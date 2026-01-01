@@ -56,8 +56,16 @@ class Saveable():
             w_name = f"param_{i}"
             d[w_name] = w_val
 
-        d_dumped = pickle.dumps (d, 4)
-        pathex.write_bytes_safe ( Path(filename), d_dumped )
+        # Stream pickle directly to disk to avoid an extra in-memory copy
+        # of the entire weights dict (pickle.dumps), which can trigger
+        # MemoryError on large models.
+        p = Path(filename)
+        p_tmp = p.parent / (p.name + '.tmp')
+        with open(p_tmp, 'wb') as f:
+            pickle.dump(d, f, protocol=4)
+        if p.exists():
+            p.unlink()
+        p_tmp.rename(p)
 
     def load_weights(self, filename):
         """
@@ -79,8 +87,9 @@ class Saveable():
                 filepath = alt
 
         if filepath.exists():
-            d_dumped = filepath.read_bytes()
-            d = pickle.loads(d_dumped)
+            # Stream unpickle to avoid reading the whole file into memory first.
+            with open(filepath, 'rb') as f:
+                d = pickle.load(f)
         else:
             return False
 

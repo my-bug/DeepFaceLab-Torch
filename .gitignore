@@ -18,3 +18,5 @@ venv/
 
 # Do NOT include upstream original project directory in this repo
 DeepFaceLab-master/
+
+bat/

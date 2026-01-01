@@ -2,7 +2,7 @@
 """清理 DeepFaceLab Torch 模型的 data.dat。
 
 常见用途：
-- 清空 iter / loss_history（让训练从 0 重新计数）
+- 重置 iter / loss_history（iter 默认设为 1，避免触发“模型首次运行”）
 - 清理 options 里的“垃圾字段”（会出现在 *_summary.txt 的 Model Options 区域）
 - 可选删除旧的 *_summary.txt（下次训练会重新生成干净的 summary）
 
@@ -10,8 +10,8 @@
   # 仅清理 options 里的垃圾字段，并删除 summary
 	python tools/clear_Iter.py --data workspace/model/new_SAEHD_data.dat --remove-option-contains "模型训练|严禁转卖" --delete-summary
 
-  # 清零 iter + loss_history，并清字段
-  python tools/clear_Iter.py --data workspace/model/new_SAEHD_data.dat --reset-iter --clear-loss-history
+	# 重置 iter(=1) + loss_history，并清字段
+	python tools/clear_Iter.py --data workspace/model/new_SAEHD_data.dat --reset-iter --clear-loss-history
 """
 
 from __future__ import annotations
@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 	ap.add_argument("--data", type=Path, required=True, help="指向 *_data.dat 文件，例如 workspace/model_converted/new_SAEHD_data.dat")
 	ap.add_argument("--no-backup", action="store_true", help="不生成 .bak 备份（不推荐）")
 
-	ap.add_argument("--reset-iter", action="store_true", help="将 iter 清零")
+	ap.add_argument("--reset-iter", action="store_true", help="将 iter 重置为 1（避免触发模型首次运行）")
 	ap.add_argument("--clear-loss-history", action="store_true", help="清空 loss_history")
 	ap.add_argument("--clear-preview-sample", action="store_true", help="清空 sample_for_preview")
 
@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
 	d = _load_pickle_dict(data_dat)
 
 	if args.reset_iter:
-		d["iter"] = 0
+		d["iter"] = 1
 
 	if args.clear_loss_history:
 		d["loss_history"] = []

@@ -114,6 +114,21 @@
         "n",
         "y",
         "cpu"
+      ],
+      "face_type": [
+        "h", 
+        "mf",
+        "f",
+        "wf",
+        "head"
+      ],
+      "archi": [
+        "liae",
+        "liae-u",
+        "liae-ud",
+        "df",
+        "df-u",
+        "df-ud"
       ]
     },
     "defaults": {

@@ -34,7 +34,7 @@ def get_model_schema(model_class: str) -> ModelSchema:
 
 
 def _read_static_schema(repo_root: Path, model_class: str) -> ModelSchema | None:
-    path = Path(repo_root) / "gui" / "schema_registry.json"
+    path = Path(repo_root) / "gui" / "data.json"
     if not path.exists():
         return None
     try:

@@ -314,7 +314,7 @@ class MainWindow(tk.Tk):
         self.save_btn.grid(row=0, column=0)
         self.reload_btn = ttk.Button(params_toolbar, text="重新读取", command=self._reload_current_model)
         self.reload_btn.grid(row=0, column=1, padx=(8, 0))
-        ttk.Label(params_toolbar, text="参数说明/可选值来自 gui/schema_registry.json（静态列表）").grid(
+        ttk.Label(params_toolbar, text="参数说明").grid(
             row=0, column=2, padx=(12, 0), sticky="w"
         )
 
@@ -980,7 +980,7 @@ class MainWindow(tk.Tk):
             cur = options.get(key, default)
 
             label = self._current_labels.get(key, "").strip()
-            left_text = f"{label} ({key})" if label else key
+            left_text = label if label else key
             name_lbl = ttk.Label(self.form.inner, text=left_text)
             name_lbl.grid(row=r, column=0, sticky="nw", padx=(0, 12), pady=3)
 

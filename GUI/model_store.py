@@ -1,11 +1,89 @@
 from __future__ import annotations
 
+import json
 import pickle
 import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+
+
+@dataclass(frozen=True)
+class ModelSchema:
+    defaults: dict[str, Any]
+    choices: dict[str, list[Any]]
+    labels: dict[str, str]
+    help: dict[str, str]
+    types: dict[str, str]
+    order: list[str]
+
+
+def get_model_schema(model_class: str) -> ModelSchema:
+    """Return schema for a given model class.
+
+    Runtime rule: ONLY read from gui/schema_registry.json.
+    GUI will not parse project/model source, will not cache, and will not overwrite the registry.
+    """
+    repo_root = Path(__file__).resolve().parents[1]
+    static = _read_static_schema(repo_root, model_class)
+    if static is None:
+        return ModelSchema(defaults={}, choices={}, labels={}, help={}, types={}, order=[])
+    return static
+
+
+def _read_static_schema(repo_root: Path, model_class: str) -> ModelSchema | None:
+    path = Path(repo_root) / "gui" / "schema_registry.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+    raw = data.get(model_class)
+    if not isinstance(raw, dict):
+        return None
+
+    defaults = raw.get("defaults", {})
+    choices = raw.get("choices", {})
+    labels = raw.get("labels", {})
+    help_text = raw.get("help", {})
+    types = raw.get("types", {})
+    order = raw.get("order", [])
+
+    if not isinstance(defaults, dict):
+        defaults = {}
+    if not isinstance(choices, dict):
+        choices = {}
+    if not isinstance(labels, dict):
+        labels = {}
+    if not isinstance(help_text, dict):
+        help_text = {}
+    if not isinstance(types, dict):
+        types = {}
+    if not isinstance(order, list):
+        order = []
+
+    # Ensure choices values are lists.
+    fixed_choices: dict[str, list[Any]] = {}
+    for k, v in choices.items():
+        if isinstance(v, list):
+            fixed_choices[str(k)] = v
+        elif isinstance(v, tuple):
+            fixed_choices[str(k)] = list(v)
+
+    return ModelSchema(
+        defaults={str(k): v for k, v in defaults.items()},
+        choices=fixed_choices,
+        labels={str(k): str(v) for k, v in labels.items()},
+        help={str(k): str(v) for k, v in help_text.items()},
+        types={str(k): str(v) for k, v in types.items()},
+        order=[str(x) for x in order],
+    )
 
 
 @dataclass(frozen=True)
@@ -83,12 +161,37 @@ def default_options_path(model_dir: Path, model_class: str) -> Path:
 def read_default_options(model_dir: Path, model_class: str) -> dict[str, Any]:
     p = default_options_path(model_dir, model_class)
     if not p.exists():
-        return {}
+        # Fall back to parsing model source for defaults (cached).
+        return get_model_schema(model_class).defaults
     try:
         data = pickle.loads(p.read_bytes())
-        return data if isinstance(data, dict) else {}
+        file_defaults = data if isinstance(data, dict) else {}
+        if file_defaults:
+            return file_defaults
+        return get_model_schema(model_class).defaults
     except Exception:
-        return {}
+        return get_model_schema(model_class).defaults
+
+
+def read_model_choices(model_class: str) -> dict[str, list[Any]]:
+    """Best-effort choices list (for normal-mode dropdowns)."""
+    return get_model_schema(model_class).choices
+
+
+def read_model_help(model_class: str) -> dict[str, str]:
+    return get_model_schema(model_class).help
+
+
+def read_model_labels(model_class: str) -> dict[str, str]:
+    return get_model_schema(model_class).labels
+
+
+def read_model_types(model_class: str) -> dict[str, str]:
+    return get_model_schema(model_class).types
+
+
+def read_model_order(model_class: str) -> list[str]:
+    return get_model_schema(model_class).order
 
 
 def backup_file(path: Path) -> Path:

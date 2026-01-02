@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 	ap.add_argument("--data", type=Path, required=True, help="指向 *_data.dat 文件，例如 workspace/model_converted/new_SAEHD_data.dat")
 	ap.add_argument("--no-backup", action="store_true", help="不生成 .bak 备份（不推荐）")
 
-	ap.add_argument("--reset-iter", action="store_true", help="将 iter 重置为 1（避免触发模型首次运行）")
+	ap.add_argument("--reset-iter", action="store_true", help="将 iter 重置为 1（同时会清空 loss_history）")
 	ap.add_argument("--clear-loss-history", action="store_true", help="清空 loss_history")
 	ap.add_argument("--clear-preview-sample", action="store_true", help="清空 sample_for_preview")
 
@@ -102,6 +102,8 @@ def main(argv: list[str] | None = None) -> int:
 
 	if args.reset_iter:
 		d["iter"] = 1
+		# reset-iter 常用于重新开始训练：同时清空 loss_history，方便从头查看曲线
+		d["loss_history"] = []
 
 	if args.clear_loss_history:
 		d["loss_history"] = []

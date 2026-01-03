@@ -29,6 +29,7 @@ DeepFaceLab 上游项目地址：
 - Python：3.14 or 3.12
 - PyTorch：2.9.x（见 `requirements.txt`）
 - CUDA：13（只需要更新nvidia驱动到最新版本，确认支持cuda13就行）
+- 已经确认cuda12.6 12.8 13都正常运行，根据官方https://pytorch.org/get-started/locally/安装PyTorch2.9.1 2.9.0即可
 
 > 注：CUDA/驱动组合可能随平台变化。若你在不同环境上遇到安装/运行差异，建议优先以 PyTorch 官方提供的安装为准。
 
@@ -38,7 +39,7 @@ DeepFaceLab 上游项目地址：
 
 - `git clone` 或直接下载 ZIP 均可。
 
-### 2) 安装 Python 3.14
+### 2) 安装 Python 3.14.0
 
 - 下载地址： https://www.python.org/downloads/
 
@@ -166,7 +167,7 @@ python3 tools/convert_dfl_tf_to_torch.py \
 python3 tools/verify_converted_dfl_model.py \
   --src /ABS/PATH/to/original_dfl_saved_models \
   --dst /ABS/PATH/to/torch_saved_models \
-  --name <YourModelName_ModelClass>
+  --all
 ```
 
 校验会做：

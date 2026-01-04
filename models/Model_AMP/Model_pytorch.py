@@ -1034,14 +1034,16 @@ class AMPModel(ModelBase):
 		with torch.no_grad():
 			_ = wrapper_cpu(dummy_face, dummy_morph)
 
+		# DeepFaceLive 侧通常用 TF 风格的 ':0' 张量名进行喂入。
+		# 这里对齐导出的 ONNX I/O 命名（只改名字，不改计算/结构）。
 		export_kwargs = dict(
-			input_names=['in_face', 'morph_value'],
-			output_names=['out_face_mask', 'out_celeb_face', 'out_celeb_face_mask'],
+			input_names=['in_face:0', 'morph_value:0'],
+			output_names=['out_face_mask:0', 'out_celeb_face:0', 'out_celeb_face_mask:0'],
 			dynamic_axes={
-				'in_face': {0: 'batch'},
-				'out_face_mask': {0: 'batch'},
-				'out_celeb_face': {0: 'batch'},
-				'out_celeb_face_mask': {0: 'batch'},
+				'in_face:0': {0: 'batch'},
+				'out_face_mask:0': {0: 'batch'},
+				'out_celeb_face:0': {0: 'batch'},
+				'out_celeb_face_mask:0': {0: 'batch'},
 			},
 			opset_version=12,
 		)

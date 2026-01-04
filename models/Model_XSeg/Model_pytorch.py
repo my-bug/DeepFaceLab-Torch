@@ -323,12 +323,16 @@ class XSegModel(ModelBase):
         with torch.no_grad():
             _ = wrapper_cpu(dummy_face)
 
+        # 原版 DFL(tf2onnx) 导出的 XSeg ONNX 使用 ':0' 张量名：
+        #   input_names=['in_face:0']
+        #   output_names=['out_mask:0']
+        # 为了保持 DeepFaceLive 侧加载一致，这里仅对齐命名。
         export_kwargs = dict(
-            input_names=['in_face'],
-            output_names=['out_mask'],
+            input_names=['in_face:0'],
+            output_names=['out_mask:0'],
             dynamic_axes={
-                'in_face': {0: 'batch'},
-                'out_mask': {0: 'batch'},
+                'in_face:0': {0: 'batch'},
+                'out_mask:0': {0: 'batch'},
             },
             opset_version=13,
         )

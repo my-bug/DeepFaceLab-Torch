@@ -862,14 +862,19 @@ class SAEHDModel(ModelBase):
         with torch.no_grad():
             _ = wrapper_cpu(dummy)
 
+        # DeepFaceLive / DFMModel.py 在推理时固定使用 'in_face:0' 作为输入名。
+        # 原版 DFL(tf2onnx) 导出也使用带 ':0' 的张量名：
+        #   input_names  = ['in_face:0']
+        #   output_names = ['out_face_mask:0','out_celeb_face:0','out_celeb_face_mask:0']
+        # 为保持兼容性，这里仅对 ONNX 的 I/O 命名对齐，不改变导出内容。
         export_kwargs = dict(
-            input_names=['in_face'],
-            output_names=['out_face_mask', 'out_celeb_face', 'out_celeb_face_mask'],
+            input_names=['in_face:0'],
+            output_names=['out_face_mask:0', 'out_celeb_face:0', 'out_celeb_face_mask:0'],
             dynamic_axes={
-                'in_face': {0: 'batch'},
-                'out_face_mask': {0: 'batch'},
-                'out_celeb_face': {0: 'batch'},
-                'out_celeb_face_mask': {0: 'batch'},
+                'in_face:0': {0: 'batch'},
+                'out_face_mask:0': {0: 'batch'},
+                'out_celeb_face:0': {0: 'batch'},
+                'out_celeb_face_mask:0': {0: 'batch'},
             },
             opset_version=12,
         )

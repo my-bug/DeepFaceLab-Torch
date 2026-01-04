@@ -3,6 +3,7 @@ from pathlib import Path
 from core import pathex
 import numpy as np
 import torch
+import os
 
 from core.leras.nn import nn
 
@@ -86,11 +87,29 @@ class Saveable():
             if alt is not None and alt.exists():
                 filepath = alt
 
-        if filepath.exists():
-            # Stream unpickle to avoid reading the whole file into memory first.
+        if not filepath.exists():
+            return False
+
+        # Stream unpickle to avoid reading the whole file into memory first.
+        # If the file is corrupted or not a pickle (common when the model
+        # directory contains wrong-format checkpoints), treat as "not loaded"
+        # so the caller can re-initialize.
+        try:
             with open(filepath, 'rb') as f:
                 d = pickle.load(f)
-        else:
+        except (pickle.UnpicklingError, EOFError, ValueError, OSError) as e:
+            try:
+                with open(filepath, 'rb') as f:
+                    head = f.read(32)
+            except Exception:
+                head = b''
+
+            print(
+                f"[WARN] Failed to load weights from '{os.fspath(filepath)}': {e}. "
+                f"This file does not look like a pickle weights file. "
+                f"Header bytes: {head!r}. "
+                f"You may need to delete/replace the corrupted or wrong-format weights file."
+            )
             return False
 
         weights = self.get_weights()

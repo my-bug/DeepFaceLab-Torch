@@ -151,6 +151,23 @@ def reinhard_color_transfer(target : np.ndarray, source : np.ndarray, target_mas
 
     reference: Color Transfer between Images https://www.cs.tau.ac.il/~turkel/imagepapers/ColorTransfer.pdf
     """
+    # OpenCV 的 cvtColor 不支持 float64(CV_64F)。
+    # 在合成链路里（例如与 python float 混合运算）可能把 float32 结果提升为 float64，
+    # 进而在这里崩溃：Unsupported depth of input image (depth=6/CV_64F)。
+    # 这里按函数注释约定（输入应为 np.float32）做一次强制转换，
+    # 只修 dtype，不改变算法/功能。
+    if target.dtype != np.float32:
+        target = np.asarray(target, dtype=np.float32)
+    if source.dtype != np.float32:
+        source = np.asarray(source, dtype=np.float32)
+    target = np.ascontiguousarray(target)
+    source = np.ascontiguousarray(source)
+
+    if target_mask is not None and target_mask.dtype != np.float32:
+        target_mask = np.asarray(target_mask, dtype=np.float32)
+    if source_mask is not None and source_mask.dtype != np.float32:
+        source_mask = np.asarray(source_mask, dtype=np.float32)
+
     source = cv2.cvtColor(source, cv2.COLOR_BGR2LAB)
     target = cv2.cvtColor(target, cv2.COLOR_BGR2LAB)
 
@@ -184,7 +201,11 @@ def reinhard_color_transfer(target : np.ndarray, source : np.ndarray, target_mas
     np.clip(target_a, -127, 127, out=target_a)
     np.clip(target_b, -127, 127, out=target_b)
 
-    return cv2.cvtColor(np.stack([target_l,target_a,target_b], -1), cv2.COLOR_LAB2BGR)
+    out = cv2.cvtColor(np.stack([target_l, target_a, target_b], -1), cv2.COLOR_LAB2BGR)
+    # 保持与调用方的 float32 约定一致。
+    if out.dtype != np.float32:
+        out = out.astype(np.float32)
+    return out
 
 
 def linear_color_transfer(target_img, source_img, mode='pca', eps=1e-5):

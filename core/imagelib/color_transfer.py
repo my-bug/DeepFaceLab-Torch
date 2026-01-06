@@ -153,9 +153,7 @@ def reinhard_color_transfer(target : np.ndarray, source : np.ndarray, target_mas
     """
     # OpenCV 的 cvtColor 不支持 float64(CV_64F)。
     # 在合成链路里（例如与 python float 混合运算）可能把 float32 结果提升为 float64，
-    # 进而在这里崩溃：Unsupported depth of input image (depth=6/CV_64F)。
-    # 这里按函数注释约定（输入应为 np.float32）做一次强制转换，
-    # 只修 dtype，不改变算法/功能。
+    # 这里按函数注释约定（输入应为 np.float32）做一次强制转换，以避免潜在的问题。
     if target.dtype != np.float32:
         target = np.asarray(target, dtype=np.float32)
     if source.dtype != np.float32:

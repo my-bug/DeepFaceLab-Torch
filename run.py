@@ -46,6 +46,7 @@ class MenuItem:
 
 def _open_path(path: Path) -> None:
     # 尝试用系统默认程序打开文件或目录（跨平台）
+    # 感谢 cnddaofeng 提供错误反馈后补充
     # macOS: 使用 `open`
     if sys.platform == 'darwin':
         subprocess.run(['open', str(path)], check=False)

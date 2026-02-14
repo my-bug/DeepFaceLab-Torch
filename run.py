@@ -45,11 +45,22 @@ class MenuItem:
 
 
 def _open_path(path: Path) -> None:
-    # macOS / Linux：尽量打开目录或文件。
+    # 尝试用系统默认程序打开文件或目录（跨平台）
+    # macOS: 使用 `open`
     if sys.platform == 'darwin':
         subprocess.run(['open', str(path)], check=False)
         return
-    subprocess.run(['xdg-open', str(path)], check=False)
+    # Windows: 使用 os.startfile（仅 Windows 可用）
+    if sys.platform == 'win32':
+        os.startfile(str(path))
+        return
+    # 其他平台（Linux 等）：尝试使用 xdg-open 或 gio
+    opener = shutil.which('xdg-open') or shutil.which('gio')
+    if opener:
+        if opener.endswith('gio'):
+            subprocess.run([opener, 'open', str(path)], check=False)
+        else:
+            subprocess.run([opener, str(path)], check=False)
 
 
 def _run_python_main(args: list[str], ctx: LaunchContext) -> int:
